@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Everything about you</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+    }
+    .container {
+      padding: 6vh 15vw;
+    }
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+      margin: 10px 0;
+    }
+    h2 {
+      display: block;
+      font-weight: 600;
+      font-size: 1.6rem;
+      margin: 10px 0;
+    }
+    h3 {
+      display: block;
+      font-size: 1.3rem;
+      height: fit-content;
+      margin: 10px 0;
+    }
+    span {
+      font-size: 1.2rem;
+    }
+    .row {
+      display: flex;
+      flex-flow: row wrap;
+    }
+    .col {
+      display: block;
+      margin-right: 30px;
+    }
+    #error {
+      display: block;
+      color: #f44336;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Everything about you</h1>
+    <h2>IP address:</h2>
+    <span id="ip-address"></span>
+    <h2>Info based on your IP address:</h2>
+    <span>(might be inaccurate)</span>
+    <span id="error"></span>
+    <div class="row">
+      <div class="col">
+        <h3>Country:</h3>
+        <span id="country"></span>
+      </div>
+      <div class="col">
+        <h3>Region:</h3>
+        <span id="region"></span>
+      </div>
+      <div class="col">
+        <h3>City:</h3>
+        <span id="city"></span>
+      </div>
+      <div class="col">
+        <h3>Geographic coordinates:</h3>
+        <span id="geographic-coordinates"></span>
+      </div>
+      <div class="col">
+        <h3>Internet Service Provider:</h3>
+        <span id="isp"></span>
+      </div>
+    </div>
+    <h2>Device:</h2>
+    <span id="device"></span>
+    <div class="row">
+      <div class="col">
+        <h3>Operating System:</h3>
+        <span id="operating-system"></span>
+      </div>
+      <div class="col">
+        <h3>CPU:</h3>
+        <b>Cores:</b>
+        <span id="cpu-cores"></span>
+        <br>
+        <b>Architecture:</b>
+        <span id="cpu-architecture"></span>
+      </div>
+      <div class="col">
+        <h3>RAM:</h3>
+        <span id="ram"></span>
+      </div>
+      <div class="col">
+        <h3>GPU and graphics API:</h3>
+        <span id="gpu"></span>
+      </div>
+      <div class="col">
+        <h3>Battery:</h3>
+        <span id="battery-level"></span>
+        <br>
+        <span id="battery-status"></span>
+      </div>
+    </div>
+    <h2>Screen:</h2>
+    <div class="row">
+      <div class="col">
+        <b>Size:</b>
+        <span id="screen-size"></span>
+      </div>
+      <div class="col">
+        <b>Refresh rate:</b>
+        <span id="screen-refresh-rate"></span>
+      </div>
+    </div>
+    <h2>Browser:</h2>
+    <span id="browser"></span>
+    <div class="row">
+      <div class="col">
+        <h3>Rendering engine:</h3>
+        <span id="rendering-engine"></span>
+      </div>
+      <div class="col">
+        <h3>Languages:</h2>
+        <span id="languages"></span>
+      </div>
+      <div class="col">
+        <h3>Browsing mode:</h2>
+        <span id="browsing-mode"></span>
+      </div>
+      <div class="col">
+        <h3>Theme:</h2>
+        <span id="theme"></span>
+      </div>
+    </div>
+    <h3>Window:</h3>
+    <div class="row">
+      <div class="col">
+        <b>Dimensions:</b>
+        <br>
+        <span id="window-width"></span>
+        <br>
+        <span id="window-height"></span>
+      </div>
+      <div class="col">
+        <b>Offset:</b>
+        <br>
+        <span id="window-x-offset"></span>
+        <br>
+        <span id="window-y-offset"></span>
+      </div>
+    </div>
+    <h3>Page:</h3>
+    <div class="row">
+      <div class="col">
+        <b>Dimensions:</b>
+        <br>
+        <span id="page-width"></span>
+        <br>
+        <span id="page-height"></span>
+      </div>
+    </div>
+  </div>
+  <script src="./ua-parser.js"></script>
+  <script src="./isPrivateMode.js"></script>
+  <script>
+    window.addEventListener('userproximity', function(event) {
+      if (event.near) {
+        alert('near')
+      } else {
+        alert('not near')
+      }
+    })
+    function $(el) {
+      return document.querySelector(el)
+    }
+    let uaParser
+    window.addEventListener('load', () => {
+      fetch('https://www.cloudflare.com/cdn-cgi/trace').then(res => res.text()).then(data => {
+        let ip = data.split('ip=')[1].split('ts=')[0]
+        $('#ip-address').innerHTML = ip
+
+        fetch('http://ip-api.com/json/' + ip).then(res => res.json()).then(ipData => {
+          $('#country').innerHTML = ipData.country
+          $('#region').innerHTML = ipData.regionName
+          $('#city').innerHTML = `${ipData.city} (${ipData.zip})`
+          $('#geographic-coordinates').innerHTML = `${ipData.lat}°N, ${ipData.lon}°E`
+          $('#isp').innerHTML = ipData.isp
+        }).catch(() => {
+          $('#error').innerHTML = "The IP API uses http and your browser doesn't allow it. Clone <a href='https://github.com/WebLasagna/everythingaboutyou'>the GitHub repository</a> and run the website locally to get it to work."
+        })
+      })
+
+      uaParser = new UAParser()
+      let device = uaParser.getDevice()
+      if(device.vendor && device.model) {
+        $('#device').innerHTML = `${device.vendor} ${device.model} (${device.type})`
+      }
+      else $('#device').innerHTML = 'Unknown'
+
+      $('#operating-system').innerHTML = uaParser.getOS().name + ' ' + uaParser.getOS().version ?? 'Unknown'
+      $('#cpu-cores').innerHTML = navigator.hardwareConcurrency ?? 'Unknown'
+      $('#cpu-architecture').innerHTML = uaParser.getCPU().architecture ?? 'Unknown'
+
+      $('#ram').innerHTML = navigator.deviceMemory ? `${navigator.deviceMemory} GB or more` : 'Unknown'
+
+      let canvas = document.createElement('canvas')
+      let gl
+      let debugInfo
+      let renderer
+      try {
+        gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+      } catch (err) {
+        console.log(err)
+      }
+      if (gl) {
+        debugInfo = gl.getExtension('WEBGL_debug_renderer_info')
+        renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+        
+        renderer = renderer.replace(/(ANGLE \()|( vs_5_0 ps_5_0\))/g, '')
+      }
+      else renderer = 'Unknown'
+      $('#gpu').innerHTML = renderer
+
+      if(navigator.brave) $('#battery-level').innerHTML = 'Unknown'
+      else {
+        navigator.getBattery().then(batteryStatus => {
+          batteryStatus.onchargingchange = (status) => {
+            console.log(status)
+            $('#battery-level').innerHTML = Math.floor(status.target.level * 100) + '%'
+            $('#battery-status').innerHTML = status.target.charging ? 'Charging' : 'Discharging'
+          }
+          $('#battery-level').innerHTML = Math.floor(batteryStatus.level * 100) + '%'
+          $('#battery-status').innerHTML = batteryStatus.charging ? 'Charging' : 'Discharging'
+        })
+      }
+
+      $('#screen-size').innerHTML = `${window.screen.width}x${window.screen.height}`
+
+      if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame =
+          window.mozRequestAnimationFrame ||
+          window.webkitRequestAnimationFrame
+      }
+
+      let t = []
+      let max = 0
+      function animate(now) {
+        t.unshift(now)
+        if (t.length > 10) {
+          var t0 = t.pop()
+          var fps = Math.floor(1000 * 10 / (now - t0))
+          if(fps > max) max = fps
+          if(max === 145) max = 144
+          if($('#screen-refresh-rate').innerHTML !== max + ' Hz') $('#screen-refresh-rate').innerHTML = max + ' Hz'
+        }
+        window.requestAnimationFrame(animate)
+      }
+      window.requestAnimationFrame(animate)
+      
+      $('#browser').innerHTML = `${uaParser.getBrowser().name} (${uaParser.getBrowser().version})`
+      if(navigator.brave) $('#browser').innerHTML = $('#browser').innerHTML.replace(/Chrome/g, 'Brave')
+      $('#rendering-engine').innerHTML = `${uaParser.getEngine().name} (${uaParser.getEngine().version})`
+      $('#languages').innerHTML = navigator.languages.toString().replace(/,/g, ', ')
+      isPrivateMode().then(isIncognito => {
+        $('#browsing-mode').innerHTML = isIncognito ? 'Incognito' : 'Normal'
+      })
+      $('#theme').innerHTML = window.matchMedia('(prefers-color-scheme: dark)') ? 'Dark' : 'Light'
+      setInterval(() => {
+        if($('#window-width').innerHTML !== `Width: ${window.screen.width}`) $('#window-width').innerHTML = `Width: ${window.outerWidth}`
+        if($('#window-height').innerHTML !== `Height: ${window.screen.height}`) $('#window-height').innerHTML = `Height: ${window.outerHeight}`
+        if($('#window-x-offset').innerHTML !== `X: ${window.screenX}`) $('#window-x-offset').innerHTML = `X: ${window.screenX}`
+        if($('#window-y-offset').innerHTML !== `Y: ${window.screenY}`) $('#window-y-offset').innerHTML = `Y: ${window.screenY}`
+
+        if($('#page-width').innerHTML !== `Width: ${document.documentElement.clientWidth}`) $('#page-width').innerHTML = `Width: ${document.documentElement.clientWidth}`
+        if($('#page-height').innerHTML !== `Height: ${document.documentElement.clientWidth}`) $('#page-height').innerHTML = `Height: ${document.documentElement.clientHeight}`
+      }, 50)
+    })
+  </script>
+</body>
+</html>
